@@ -25,12 +25,12 @@ st.markdown("""
 @st.cache_resource
 def load_model(model_name):
     """加载指定的模型"""
-    model_path = f"data/{model_name}_model_iris.pkl"
+    model_path = f"{model_name}_model_iris.pkl"
     if os.path.exists(model_path):
         return joblib.load(model_path)
     else:
         # 如果模型不存在，使用默认路径
-        model_path = "data/logit_model_iris.pkl"
+        model_path = "logit_model_iris.pkl"
         return joblib.load(model_path)
 
 # ========== 侧边栏：模型选择 ==========
@@ -159,7 +159,7 @@ if st.button("🔮 预测鸢尾花品种", type="primary", use_container_width=T
 # ========== 显示数据集预览 ==========
 st.markdown("---")
 with st.expander("📖 查看 Iris 数据集预览"):
-    df = pd.read_csv("data/iris.csv")
+    df = pd.read_csv("iris.csv")
     st.dataframe(df.head(10))
     st.caption(f"数据集共 {len(df)} 条记录")
 
