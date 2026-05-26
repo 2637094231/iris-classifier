@@ -23,15 +23,50 @@ st.markdown("""
 
 # ========== 加载模型 ==========
 @st.cache_resource
-def load_model(model_name):
-    """加载指定的模型"""
-    model_path = f"{model_name}_model_iris.pkl"
+def load_model(model_key):
+    """加载模型，如果失败则自动重新训练"""
+    model_path = f"{model_key}_model_iris.pkl"
+    
+    # 尝试加载现有模型
     if os.path.exists(model_path):
-        return joblib.load(model_path)
+        try:
+            model = joblib.load(model_path)
+            # 快速测试模型是否可用
+            test_input = np.array([[5.0, 3.0, 4.0, 1.0]])
+            model.predict(test_input)
+            return model
+        except Exception as e:
+            st.warning(f"⚠️ 模型文件不兼容，将重新训练: {e}")
+    
+    # 重新训练模型
+    from sklearn.datasets import load_iris
+    iris = load_iris()
+    
+    if model_key == "logit":
+        from sklearn.linear_model import LogisticRegression
+        model = LogisticRegression(max_iter=200)
+    elif model_key == "knn":
+        from sklearn.neighbors import KNeighborsClassifier
+        model = KNeighborsClassifier(n_neighbors=5)
+    elif model_key == "svm":
+        from sklearn.svm import SVC
+        model = SVC(probability=True)
+    elif model_key == "dtree":
+        from sklearn.tree import DecisionTreeClassifier
+        model = DecisionTreeClassifier()
     else:
-        # 如果模型不存在，使用默认路径
-        model_path = "logit_model_iris.pkl"
-        return joblib.load(model_path)
+        model = LogisticRegression(max_iter=200)
+    
+    model.fit(iris.data, iris.target)
+    
+    # 可选：保存新模型（云端可能没有写入权限）
+    try:
+        joblib.dump(model, model_path)
+    except:
+        pass
+    
+    st.info(f"✅ 已用新版 scikit-learn 重新训练 {model_key} 模型")
+    return model
 
 # ========== 侧边栏：模型选择 ==========
 st.sidebar.header("⚙️ 模型选择")
