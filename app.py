@@ -112,14 +112,26 @@ if st.button("🔮 预测鸢尾花品种", type="primary", use_container_width=T
         features = input_df.values.reshape(1, -1)
         prediction = model.predict(features)[0]
         
-        # 品种映射
-        species_map = {
-            0: {"name": "Setosa (山鸢尾)", "color": "green", "image": "iris_setosa"},
-            1: {"name": "Versicolor (变色鸢尾)", "color": "blue", "image": "iris_versicolor"},
-            2: {"name": "Virginica (维吉尼亚鸢尾)", "color": "red", "image": "iris_virginica"}
-        }
+        # 调试信息（部署后可以删除）
+        st.write(f"调试：预测原始值 = {prediction}, 类型 = {type(prediction)}")
         
-        result = species_map[prediction]
+        # 统一处理预测结果（兼容数字和字符串）
+        # 将预测值转换为小写字符串
+        pred_str = str(prediction).strip().lower()
+        
+        # 定义映射（同时支持数字和字符串）
+        if pred_str in ["0", "setosa"]:
+            result_name = "Setosa (山鸢尾)"
+            color = "green"
+        elif pred_str in ["1", "versicolor"]:
+            result_name = "Versicolor (变色鸢尾)"
+            color = "blue"
+        elif pred_str in ["2", "virginica"]:
+            result_name = "Virginica (维吉尼亚鸢尾)"
+            color = "red"
+        else:
+            result_name = f"未知品种 (预测值: {prediction})"
+            color = "gray"
         
         # 显示结果
         st.markdown("---")
@@ -129,33 +141,35 @@ if st.button("🔮 预测鸢尾花品种", type="primary", use_container_width=T
         st.markdown(
             f"""
             <div style="
-                background-color: {result['color']}20;
+                background-color: {color}20;
                 padding: 30px;
                 border-radius: 10px;
                 text-align: center;
-                border: 2px solid {result['color']};
+                border: 2px solid {color};
             ">
-                <h2 style="color: {result['color']}; margin: 0;">
-                    {result['name']}
+                <h2 style="color: {color}; margin: 0;">
+                    {result_name}
                 </h2>
             </div>
             """,
             unsafe_allow_html=True
         )
         
-        # 显示预测概率（如果模型支持）
+        # 显示预测概率（如果模型支持且输出为数字）
         if hasattr(model, 'predict_proba'):
-            proba = model.predict_proba(features)[0]
-            st.subheader("📊 预测概率")
-            
-            prob_df = pd.DataFrame({
-                '品种': ['Setosa', 'Versicolor', 'Virginica'],
-                '概率': proba
-            })
-            st.bar_chart(prob_df.set_index('品种'))
+            try:
+                proba = model.predict_proba(features)[0]
+                st.subheader("📊 预测概率")
+                
+                prob_df = pd.DataFrame({
+                    '品种': ['Setosa', 'Versicolor', 'Virginica'],
+                    '概率': proba
+                })
+                st.bar_chart(prob_df.set_index('品种'))
+            except:
+                st.info("当前模型不支持概率预测")
     else:
         st.error("❌ 模型未加载，请检查模型文件是否存在")
-
 # ========== 显示数据集预览 ==========
 st.markdown("---")
 with st.expander("📖 查看 Iris 数据集预览"):
